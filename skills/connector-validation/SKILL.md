@@ -85,13 +85,23 @@ above.
 
 ### 1. Discover the runtime field IDs
 
-**Important:** the field IDs declared in `config.json` are typically
-**prefixed with the Report Type ID** at runtime — so a Configuration
-field `clicks` in Report Type `ad_perf` may surface to
-`queries execute` as `ad_perf.clicks` (or similar). Always discover
-the runtime IDs by introspecting the saved Connector with
-`datasource get` rather than assuming the Configuration's field IDs
-will work as-is:
+**Important:** the field IDs declared in `config.json` are **not** the
+field IDs `queries execute --fields` expects. At runtime they get
+prefixed with the Report Type ID.
+
+**Schema v1 rule:**
+
+```
+runtime_field_id = <report_type_id> + "_" + <config_field_id>
+```
+
+Example: a field declared as `clicks` inside Report Type `ad_perf` is
+queried as `ad_perf_clicks`. Underscore separator, not dot.
+
+You can construct expected runtime IDs from the Configuration
+mechanically using this rule. **But always verify by introspecting
+the saved Connector** — the prefix rule may change in future schema
+versions, and `datasource get` is authoritative:
 
 ```bash
 mkdir -p logs
@@ -102,11 +112,14 @@ supermetrics datasource get \
   > logs/datasource.json 2>&1
 ```
 
-Parse the output to find the available fields and their runtime IDs.
-For each Configuration-side field ID, locate its runtime equivalent
-(typically `<report-type-id>.<config-field-id>`). If a Configuration
-field can't be found anywhere in the runtime view, that field wasn't
-registered correctly — fix in Phase 4 before continuing.
+Parse `logs/datasource.json` for the available fields and confirm
+each constructed ID actually appears in the runtime view. If one
+doesn't, either:
+
+- The Configuration is wrong (field not declared, declared under a
+  different Report Type, or has a typo) — fix in Phase 4.
+- The schema version is no longer v1 and the prefix rule has changed
+  — adapt this skill.
 
 Pass the **runtime** IDs to `queries execute --fields`, never the
 raw Configuration IDs.
