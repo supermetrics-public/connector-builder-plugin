@@ -307,12 +307,20 @@ the plugin so you always see current content.
 
 ## Versioning
 
-Plugin versions follow a **calendar scheme**: `YYYY.MM.N` (e.g.
-`2026.06.0`). Releases are tagged on GitHub.
+The plugin is in **pre-release**. While we iterate, every commit on
+`main` is effectively a new version — Claude Code uses the git
+commit SHA as the version when `plugin.json` doesn't pin one. Run
+`/plugin marketplace update supermetrics-connector-builder` to pull
+the latest.
 
-The plugin re-downloads the JSON Schema (cached daily) and references
-the docs portal live, so most changes to the platform are picked up
-without a new plugin release.
+Once we cut a first stable release, the plugin will move to
+**calendar-based versioning** (`YYYY.MM.N`, e.g. `2026.06.0`) with
+explicit version bumps on each release.
+
+The plugin also re-downloads the JSON Schema (cached daily) and
+references the docs portal live, so most changes to the underlying
+Supermetrics platform are picked up without any plugin release at
+all.
 
 ---
 

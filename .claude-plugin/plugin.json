@@ -2,7 +2,6 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "supermetrics-connector-builder",
   "displayName": "Supermetrics Connector Builder",
-  "version": "2026.06.0",
   "description": "Build, validate, and troubleshoot Supermetrics Connectors with Claude — through a guided 5-phase workflow driving the supermetrics CLI.",
   "author": {
     "name": "Supermetrics"
