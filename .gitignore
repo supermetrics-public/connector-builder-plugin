@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Linux
+*~
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+
+# Logs
+*.log
+
+# Local environment files — defensive; should never be in this repo
+.env
+.env.local
+.env.*.local
