@@ -408,12 +408,18 @@ supermetrics logins list \
 # Default table output, only the columns we asked for.
 ```
 
+> In the examples below, `<team-id>` / `<ds-id>` / `<ds-user>` are
+> placeholders. Per the "Permission noise" rule below, **`Read` the
+> values from `<project>/.team-id`, `.ds-id`, `.ds-user` first, then
+> put the literals into the command** — don't write `"$(cat .…)"`
+> into your bash, it triggers a per-invocation permission prompt.
+
 Get the names of registered secrets (nested array, needs `--flatten`):
 
 ```bash
 supermetrics connector-builder-secrets list \
-  --team-id "$(cat .team-id)" \
-  --connector-identifier "$(cat .ds-id)" \
+  --team-id <team-id> \
+  --connector-identifier <ds-id> \
   --fields secrets.name --flatten
 ```
 
@@ -421,8 +427,8 @@ List execution logs as flat rows:
 
 ```bash
 supermetrics connector-builder-logs list \
-  --team-id "$(cat .team-id)" \
-  --connector-identifier "$(cat .ds-id)" \
+  --team-id <team-id> \
+  --connector-identifier <ds-id> \
   --fields logs.id,logs.event,logs.log_time,logs.request_id \
   --flatten
 ```
@@ -433,8 +439,8 @@ saved Connector:
 ```bash
 # Store the full response (we want to scan it for many possible IDs).
 supermetrics datasource get \
-  --data-source-id "$(cat .ds-id)" \
-  --team-id "$(cat .team-id)" \
+  --data-source-id <ds-id> \
+  --team-id <team-id> \
   --output json \
   > logs/datasource.json 2>&1
 # Then Read the file and look for "ad_perf_clicks", etc.
@@ -457,6 +463,64 @@ print(len(d.get("data", {}).get("rows", [])))
 - **Reading a giant log file in full before knowing what you're looking for.** First narrow with `--fields` or `--output csv`, then `Read` the trimmed file.
 - **Re-running the same CLI command to extract two different fields.** Run once with `--output json > file`, then read multiple paths out of the file.
 - **Forgetting `--flatten` on nested-array commands.** You'll see `foo: N items` and think the response is empty. It isn't; the rows just need flattening.
+
+### Permission noise — keep bash commands statically analyzable
+
+Claude Code's permission system has two analyzers that bail and
+prompt-on-every-invocation when they can't statically read what a
+bash command will do:
+
+- **`simple_expansion`** — any `$VAR` in the command (`"$TOKEN"`,
+  `"$ds_id"`, etc.).
+- **"shell syntax that cannot be statically analyzed"** — `$(…)`
+  command substitution, `cmd1; cmd2` chaining, complex pipelines,
+  heredocs, conditionals.
+
+Both are documented Claude Code limitations and **cannot** be
+pre-allowed in `settings.json`. Skills minimize them by following
+two rules when invoking the CLI:
+
+1. **Read the small ID files yourself; use literal values.**
+   `<project>/.ds-id`, `.ds-user`, `.team-id` hold short non-secret
+   identifiers (5-char strings, numbers, usernames). When a step
+   needs them, use the `Read` tool to fetch the values, then put
+   the literal value into the bash command — don't write
+   `"$(cat .ds-id)"` into the shell.
+
+   Bad:
+   ```bash
+   supermetrics queries execute --ds-id "$(cat .ds-id)" --ds-user "$(cat .ds-user)" …
+   ```
+
+   Good (after `Read`-ing the two files):
+   ```bash
+   supermetrics queries execute --ds-id RCB62 --ds-user 91d199cd-fd87-411d-aee4-20c01d57a689 …
+   ```
+
+   These IDs aren't secrets — they appear in chat history, that's
+   fine. Secrets always go through the secrets store, never inline.
+
+2. **One bash command per invocation; no chaining.**
+   Each Bash tool call should run **one** command, redirect output
+   if needed, and stop. To inspect the result, use `Read` on the
+   output file in a separate step. The Bash tool itself returns the
+   command's exit code as part of its result — you don't need to
+   `echo "exit=$?" > file.exit` to capture it.
+
+   Bad:
+   ```bash
+   cmd > file 2>&1; echo "exit=$?" > file.exit; cat file.exit; head -c 2000 file
+   ```
+
+   Good (one bash + one Read):
+   ```bash
+   # Bash:
+   cmd > file 2>&1
+   # …then Read file (separate tool call).
+   ```
+
+   The Bash tool's own return tells you the exit code; the file
+   content is one `Read` away.
 
 ## 10. Exit codes (skill error-handling)
 

@@ -17,7 +17,7 @@ Upload, replace, or fetch the logo for a saved Connector.
 
 ```bash
 supermetrics connector-builder-logo upload \
-  --team-id "$(cat .team-id)" \
+  --team-id <team-id> \
   --connector-identifier <ds-id> \
   --file <path-to-image>
 ```
@@ -29,7 +29,7 @@ is no separate "delete" — upload a different image if needed.
 
 ```bash
 supermetrics connector-builder-logo get \
-  --team-id "$(cat .team-id)" \
+  --team-id <team-id> \
   --connector-identifier <ds-id> \
   --output <save-path>
 ```

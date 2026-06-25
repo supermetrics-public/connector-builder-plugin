@@ -70,7 +70,7 @@ secret the Configuration needs:
 
    ```bash
    supermetrics connector-builder-secrets create \
-     --team-id "$(cat .team-id)" \
+     --team-id <team-id> \
      --connector-identifier <ds-id> \
      --secret-name <id>
    # CLI prompts for the value with masked input
@@ -83,7 +83,7 @@ After registration, confirm presence:
 
 ```bash
 supermetrics connector-builder-secrets list \
-  --team-id "$(cat .team-id)" \
+  --team-id <team-id> \
   --connector-identifier <ds-id>
 ```
 

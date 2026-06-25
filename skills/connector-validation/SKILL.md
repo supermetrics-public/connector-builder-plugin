@@ -23,6 +23,22 @@ Connector is declared done:
 - `<project>/samples/` has at least one verified sample per Report
   Type from Phase 3.
 
+## Resolve identifiers before the first CLI call
+
+`Read` these three small files **once** at the start of the skill
+and remember the values:
+
+- `<project>/.ds-id` → the Connector identifier (5-char string).
+- `<project>/.team-id` → the team scope (number).
+- `<project>/.ds-user` → the Login (Connection) username, after
+  Step 0 has populated it.
+
+All bash commands below use placeholders (`<ds-id>`, `<team-id>`,
+`<ds-user>`) — substitute the **literal** values from those reads
+when running each command. **Do not write `"$(cat .ds-id)"` into the
+shell** — it triggers a Claude Code permission prompt on every
+invocation. These IDs aren't secrets; using literals is correct.
+
 ## Sequence
 
 ### 0. Ensure a Login (Connection) exists for this Connector
@@ -52,7 +68,7 @@ If none exists, create one:
 
 ```bash
 supermetrics login-links create \
-  --ds-id "$(cat .ds-id)" \
+  --ds-id <ds-id> \
   --description "Login for <connector-name> validation" \
   --expiry-time "+24h" \
   --output json \
@@ -114,8 +130,8 @@ that listing as the cross-check, not the discovery mechanism.
 ```bash
 mkdir -p logs
 supermetrics datasource get \
-  --data-source-id "$(cat .ds-id)" \
-  --team-id "$(cat .team-id)" \
+  --data-source-id <ds-id> \
+  --team-id <team-id> \
   --output json \
   > logs/datasource.json 2>&1
 ```
@@ -144,8 +160,8 @@ specified one:
 
 ```bash
 supermetrics accounts list \
-  --ds-id "$(cat .ds-id)" \
-  --ds-users "$(cat .ds-user)" \
+  --ds-id <ds-id> \
+  --ds-users <ds-user> \
   > logs/accounts.txt 2>&1
 ```
 
@@ -161,8 +177,8 @@ field IDs:
 
 ```bash
 supermetrics queries execute \
-  --ds-id "$(cat .ds-id)" \
-  --ds-user "$(cat .ds-user)" \
+  --ds-id <ds-id> \
+  --ds-user <ds-user> \
   --fields <runtime-field-ids-comma-separated> \
   --start-date <YYYY-MM-DD> \
   --end-date <YYYY-MM-DD> \
@@ -170,8 +186,11 @@ supermetrics queries execute \
   --limit 10 \
   --output json \
   > logs/queries-execute.json 2>&1
-echo "exit=$?" > logs/queries-execute.exit
 ```
+
+The Bash tool's own return tells you the exit code — no need to
+`echo "exit=$?" > .exit`. Read `logs/queries-execute.json` for the
+body (success rows or error envelope).
 
 Notes:
 
@@ -193,7 +212,9 @@ Notes:
 
 ### 5. Branch on exit code
 
-Read `logs/queries-execute.exit` to get the exit code.
+The Bash tool returns the exit code of the `queries execute`
+invocation directly — read it from the tool's result, not from a
+separate `.exit` file.
 
 | Exit | Meaning | Action |
 |---|---|---|
@@ -242,11 +263,13 @@ What does **not** count:
 
 The `logs/` folder fills up fast during iteration. Keep it clean:
 
-- All CLI invocations in this skill redirect to `logs/`. Use
-  `> logs/<name>.json 2>&1` (and `echo "exit=$?" > logs/<name>.exit`
-  to capture the exit code). **Never use `tee`** — it triggers a
-  Claude Code permission prompt on every run and adds no value
-  beyond `>` + `Read`.
+- All CLI invocations in this skill redirect to `logs/` with
+  `> logs/<name>.<ext> 2>&1` (no `tee`, no chains — the Bash tool
+  surfaces the exit code on its own; `Read` the file afterwards for
+  content). **Never use `tee`** — it triggers a Claude Code
+  permission prompt on every run and adds no value beyond `>` +
+  `Read`. **Don't chain commands with `;`** either — same kind of
+  prompt.
 - Treat `logs/` as scratch space. Files there are diagnostic, not
   authoritative — never rely on a `logs/` file across phases.
 - **After a successful validation**, prune `logs/` to just the

@@ -69,7 +69,7 @@ Before every `update`, walk this list and fix anything that fails:
    anywhere in the Configuration appears in the root `secrets`
    object, and vice versa (no unused declarations).
 4. **Secrets present in the store.** Run
-   `supermetrics connector-builder-secrets list --team-id "$(cat .team-id)" --connector-identifier <ds-id> --fields secrets.name --flatten`
+   `supermetrics connector-builder-secrets list --team-id <team-id> --connector-identifier <ds-id> --fields secrets.name --flatten`
    and confirm every declared ID is in the listing. (Use `--flatten`
    because `secrets` is a nested array — without it the default view
    just shows `secrets: N items`.) A missing secret will surface as a
@@ -105,7 +105,7 @@ Only after both layers pass:
 
 ```bash
 supermetrics connector-builder update \
-  --team-id "$(cat .team-id)" \
+  --team-id <team-id> \
   --connector-identifier <ds-id> \
   --connector-file '{"connector": {"name": "<Name>", "description": "<Description>"}}' \
   --configuration-file <project>/config.json
@@ -137,7 +137,7 @@ identifier:
 
 ```bash
 supermetrics connector-builder create \
-  --team-id "$(cat .team-id)" \
+  --team-id <team-id> \
   --connector-file '{"connector": {"name": "<Name>", "description": "<Description>"}}' \
   --configuration-file <project>/config.json
 ```
