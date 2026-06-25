@@ -377,6 +377,68 @@ constructed IDs exist in the listing.
 Retry behavior: 3 total attempts, exponential backoff (max delay 20s),
 honors `Retry-After` on HTTP 429.
 
+## 9a. CLI output: which tool when
+
+The CLI's output shape determines which tool an agent should reach
+for. Three patterns; pick by intent, not by reflex.
+
+| Intent | Pattern | Why |
+|---|---|---|
+| _"I want a specific field or two from this command's output."_ | `--fields <path>[,<path>…] --output table` | The CLI does the projection; output is small and human-readable. No parsing needed. Dot-notation works for nested fields (`error.message`). |
+| _"I want to skim or orient on the response — see what's in it."_ | `--output json > logs/<name>.json` then `Read` | For small-to-medium responses (under ~a thousand lines), `Read` is fast and lets the model pattern-match across the whole document. No escaping, no `$defs`/`$schema` collisions. |
+| _"I need to count, filter, or transform — actual compute."_ | Python (or `jq` if installed) | Genuine logic over data. Worth the escaping cost because the CLI / Read can't express it. |
+
+**Default to the first or second; the third is for real work, not for picking one field.**
+
+### Examples
+
+Get the names of registered secrets without parsing JSON:
+
+```bash
+supermetrics connector-builder-secrets list \
+  --team-id "$(cat .team-id)" \
+  --connector-identifier "$(cat .ds-id)" \
+  --fields name \
+  --output table
+```
+
+See which Logins exist for a Data Source (then pick one to use):
+
+```bash
+supermetrics logins list \
+  --fields id,ds_id,user_name \
+  --output table
+```
+
+Cross-check whether a constructed runtime field ID is present in the
+saved Connector:
+
+```bash
+# Store the full response (we want to scan it).
+supermetrics datasource get \
+  --data-source-id "$(cat .ds-id)" \
+  --team-id "$(cat .team-id)" \
+  --output json \
+  > logs/datasource.json 2>&1
+# Then Read the file and look for "ad_perf_clicks", etc.
+```
+
+Count rows returned by a query (a true compute case):
+
+```bash
+python3 -c '
+import json
+d = json.load(open("logs/queries-execute.json"))
+print(len(d.get("data", {}).get("rows", [])))
+'
+```
+
+### Anti-patterns to avoid
+
+- **Piping a CLI JSON response to `python3 -c` just to extract one field.** `--fields path --output table` does the same thing with less code, no escaping, and no `$` collisions inside shell strings.
+- **Reading a giant log file in full before knowing what you're looking for.** First narrow with `--fields` or `--output csv`, then `Read` the trimmed file.
+- **Re-running the same CLI command to extract two different fields.** Run once with `--output json > file`, then read multiple paths out of the file.
+
 ## 10. Exit codes (skill error-handling)
 
 | Code | Meaning            | Skill should…                              |

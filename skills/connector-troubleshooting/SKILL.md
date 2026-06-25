@@ -60,18 +60,22 @@ in this workflow. Walk this list before assuming the worst:
 
 **2a. Missing secret.** A Configuration that references a secret ID
 not registered in the store returns a generic auth failure with **no
-naming of the missing secret**. Check:
+naming of the missing secret**. Check (projected table — we only
+need the names):
 
 ```bash
 supermetrics connector-builder-secrets list \
   --team-id <team-id> \
   --connector-identifier <ds-id> \
-  --output json > logs/cb-secrets.json 2>&1
+  --fields name \
+  --output table \
+  > logs/cb-secrets.txt 2>&1
 ```
 
-Cross-reference against the Configuration's root `secrets` object:
+Read `logs/cb-secrets.txt` and cross-reference against the
+Configuration's root `secrets` object:
 
-- Every ID declared in `secrets` should appear in the `list` output.
+- Every ID declared in `secrets` should appear in the listing.
 - Every secret referenced inside auth / Connection / request
   definitions should be declared in `secrets`.
 
@@ -81,16 +85,19 @@ Re-run the failing call.
 
 **2b. Missing or expired Login (Connection).** Even with all secrets
 present, `queries execute` fails if there's no authenticated Login
-for this Connector's Data Source. Check:
+for this Connector's Data Source. Check (projected table):
 
 ```bash
-supermetrics logins list --output json > logs/logins.json 2>&1
+supermetrics logins list \
+  --fields id,ds_id,user_name \
+  --output table \
+  > logs/logins.txt 2>&1
 ```
 
-Look for an entry matching the current `<ds-id>` that is not
-expired. If none exists, hand off to `connector-validation` step 0
-(or `connector-config-auth` if the user is still in Phase 4) to
-create one via `login-links create`.
+Read `logs/logins.txt` for a row whose `ds_id` matches the current
+`<ds-id>` and is not expired. If none exists, hand off to
+`connector-validation` step 0 (or `connector-config-auth` if the
+user is still in Phase 4) to create one via `login-links create`.
 
 **2c. Actual auth-token problem.** Only if both 2a and 2b are clean,
 treat exit 65 as a real token issue (expired refresh token, scope
@@ -197,5 +204,6 @@ recommend rotating it via `connector-builder-secrets update`.
 ## Deeper reference
 
 - `${CLAUDE_PLUGIN_ROOT}/docs/cli-reference.md §6` — `connector-builder-logs` commands.
+- `${CLAUDE_PLUGIN_ROOT}/docs/cli-reference.md §9a` — CLI output style: when to use `--fields`+`table` vs JSON+Read vs Python.
 - `${CLAUDE_PLUGIN_ROOT}/docs/cli-reference.md §10` — exit-code semantics.
 - `${CLAUDE_PLUGIN_ROOT}/docs/connector-core-knowledge.md §§5–7` — concepts being diagnosed.

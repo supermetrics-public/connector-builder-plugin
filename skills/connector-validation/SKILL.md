@@ -33,16 +33,20 @@ core knowledge §5.1 calls a Connection). Without one, every query
 returns an auth failure regardless of how clean the Configuration
 is.
 
-First, check whether a usable Login already exists:
+First, check whether a usable Login already exists. Use a projected
+table view — we only need the identifying fields, not the full record:
 
 ```bash
 mkdir -p logs
-supermetrics logins list --output json > logs/logins.json 2>&1
+supermetrics logins list \
+  --fields id,ds_id,user_name \
+  --output table \
+  > logs/logins.txt 2>&1
 ```
 
-Parse `logs/logins.json` for an entry whose data source matches the
-current `<ds-id>`. If one exists and is not expired, capture its
-identifier into `<project>/.ds-user` and skip to step 1.
+Read `logs/logins.txt` and find a row whose `ds_id` matches the
+current `<ds-id>`. If one exists, capture its `id` into
+`<project>/.ds-user` and skip to step 1.
 
 If none exists, create one:
 
@@ -66,11 +70,14 @@ The output contains a URL. The skill must then:
 4. **Verify the Login appeared:**
 
    ```bash
-   supermetrics logins list --output json > logs/logins.json 2>&1
+   supermetrics logins list \
+     --fields id,ds_id,user_name \
+     --output table \
+     > logs/logins.txt 2>&1
    ```
 
    Find the new Login matching the current `<ds-id>`, capture its
-   identifier into `<project>/.ds-user`.
+   `id` into `<project>/.ds-user`.
 5. **Close the used link** so the URL can't be reused:
 
    ```bash
@@ -139,11 +146,13 @@ specified one:
 supermetrics accounts list \
   --ds-id "$(cat .ds-id)" \
   --ds-users "$(cat .ds-user)" \
-  --output json \
-  > logs/accounts.json 2>&1
+  --fields id,name \
+  --output table \
+  > logs/accounts.txt 2>&1
 ```
 
-Pick one account ID for the first validation run. Expand later.
+Pick one account ID from the table for the first validation run.
+Expand later.
 
 ### 4. Run `queries execute`
 
@@ -249,12 +258,28 @@ Useful files to *briefly* keep around during a session:
 
 - `logs/datasource.json` — the runtime view; reused across multiple
   validation runs.
-- `logs/accounts.json` — same.
+- `logs/logins.txt`, `logs/accounts.txt` — projected tables; reused.
 - `logs/queries-execute-<report>.json` + `.exit` — the latest
   validation run per Report Type.
 
 If a Report Type's last run was successful, its `queries-execute`
 log can be deleted at the next "all green" checkpoint.
+
+## CLI output style
+
+When invoking the CLI in this skill, follow the rule from
+`${CLAUDE_PLUGIN_ROOT}/docs/cli-reference.md §9a`:
+
+- **Specific field(s) from output** → `--fields <path>[,…] --output table`.
+  Don't pipe to Python just to pluck a value.
+- **Need to skim the response** → `--output json > logs/<name>.json`,
+  then `Read` the file.
+- **Real compute** (count, filter, transform) → Python or `jq`.
+
+This skill's examples already follow that pattern: small projected
+tables for discovery (`logins list`, `accounts list`), full JSON
+storage only for `datasource get` (we scan it for runtime IDs) and
+`queries execute` (we diff it against Phase 3 samples).
 
 ## Common mistakes
 

@@ -68,11 +68,11 @@ Before every `update`, walk this list and fix anything that fails:
 3. **Secrets declared = secrets used.** Every secret ID referenced
    anywhere in the Configuration appears in the root `secrets`
    object, and vice versa (no unused declarations).
-4. **Secrets present in the store.** Run `supermetrics
-   connector-builder-secrets list --team-id "$(cat .team-id)"
-   --connector-identifier <ds-id>` and confirm every declared ID is
-   registered. A missing secret will surface as a generic auth
-   failure at runtime (see `connector-troubleshooting`).
+4. **Secrets present in the store.** Run
+   `supermetrics connector-builder-secrets list --team-id "$(cat .team-id)" --connector-identifier <ds-id> --fields name --output table`
+   and confirm every declared ID is in the listing. A missing secret
+   will surface as a generic auth failure at runtime (see
+   `connector-troubleshooting`).
 5. **Field IDs resolve.** Every field referenced by a Report Type is
    declared in that Report Type's field list.
 6. **Cross-references resolve.** Account selectors, response paths,
@@ -169,4 +169,5 @@ returned `ds-id` and write it to `<project>/.ds-id` for later
 
 - `${CLAUDE_PLUGIN_ROOT}/docs/connector-core-knowledge.md §7 Phase 4` — workflow context.
 - `${CLAUDE_PLUGIN_ROOT}/docs/cli-reference.md §§4, 13, 14` — `connector-builder` commands, validation strategy, schema caching.
+- `${CLAUDE_PLUGIN_ROOT}/docs/cli-reference.md §9a` — CLI output style: when to use `--fields`+`table` vs JSON+Read vs Python.
 - `${CLAUDE_PLUGIN_ROOT}/docs/docs-links.md` — section: "Core configuration concepts."
