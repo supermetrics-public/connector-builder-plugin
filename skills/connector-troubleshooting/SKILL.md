@@ -67,10 +67,14 @@ need the names):
 supermetrics connector-builder-secrets list \
   --team-id <team-id> \
   --connector-identifier <ds-id> \
-  --fields name \
-  --output table \
+  --fields secrets.name --flatten \
   > logs/cb-secrets.txt 2>&1
 ```
+
+(The default output shows `secrets: N items`; `--flatten` expands
+the array into rows. If `--fields secrets.name` returns an empty
+table on a connector you know has secrets, drop the projection and
+re-run to confirm the field path.)
 
 Read `logs/cb-secrets.txt` and cross-reference against the
 Configuration's root `secrets` object:
@@ -89,13 +93,12 @@ for this Connector's Data Source. Check (projected table):
 
 ```bash
 supermetrics logins list \
-  --fields id,ds_id,user_name \
-  --output table \
+  --fields login_id,display_name,ds_info.ds_id,username \
   > logs/logins.txt 2>&1
 ```
 
-Read `logs/logins.txt` for a row whose `ds_id` matches the current
-`<ds-id>` and is not expired. If none exists, hand off to
+Read `logs/logins.txt` for a row whose `DS_INFO.DS_ID` matches the
+current `<ds-id>` and whose `REVOKED_TIME` is empty. If none exists, hand off to
 `connector-validation` step 0 (or `connector-config-auth` if the
 user is still in Phase 4) to create one via `login-links create`.
 

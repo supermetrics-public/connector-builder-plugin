@@ -69,10 +69,11 @@ Before every `update`, walk this list and fix anything that fails:
    anywhere in the Configuration appears in the root `secrets`
    object, and vice versa (no unused declarations).
 4. **Secrets present in the store.** Run
-   `supermetrics connector-builder-secrets list --team-id "$(cat .team-id)" --connector-identifier <ds-id> --fields name --output table`
-   and confirm every declared ID is in the listing. A missing secret
-   will surface as a generic auth failure at runtime (see
-   `connector-troubleshooting`).
+   `supermetrics connector-builder-secrets list --team-id "$(cat .team-id)" --connector-identifier <ds-id> --fields secrets.name --flatten`
+   and confirm every declared ID is in the listing. (Use `--flatten`
+   because `secrets` is a nested array — without it the default view
+   just shows `secrets: N items`.) A missing secret will surface as a
+   generic auth failure at runtime (see `connector-troubleshooting`).
 5. **Field IDs resolve.** Every field referenced by a Report Type is
    declared in that Report Type's field list.
 6. **Cross-references resolve.** Account selectors, response paths,

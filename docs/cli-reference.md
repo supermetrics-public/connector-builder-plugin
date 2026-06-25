@@ -384,37 +384,54 @@ for. Three patterns; pick by intent, not by reflex.
 
 | Intent | Pattern | Why |
 |---|---|---|
-| _"I want a specific field or two from this command's output."_ | `--fields <path>[,<path>…] --output table` | The CLI does the projection; output is small and human-readable. No parsing needed. Dot-notation works for nested fields (`error.message`). |
+| _"I want a specific field or two from this command's output."_ | `--fields <path>[,<path>…]` (default table format works) | The CLI does the projection; output is small and human-readable. No parsing needed. |
 | _"I want to skim or orient on the response — see what's in it."_ | `--output json > logs/<name>.json` then `Read` | For small-to-medium responses (under ~a thousand lines), `Read` is fast and lets the model pattern-match across the whole document. No escaping, no `$defs`/`$schema` collisions. |
 | _"I need to count, filter, or transform — actual compute."_ | Python (or `jq` if installed) | Genuine logic over data. Worth the escaping cost because the CLI / Read can't express it. |
 
 **Default to the first or second; the third is for real work, not for picking one field.**
 
-### Examples
+### Rules learned the hard way
 
-Get the names of registered secrets without parsing JSON:
+1. **Default output IS already table.** Don't add `--output table` — it's redundant. `--output json` is the only one that overrides it.
+2. **`--fields` uses lowercase JSON keys, dot-notation for nesting.** Use the keys from `--output json` output, not the uppercase headers you see in the default table.
+3. **Wrong `--fields` name returns an empty table, NOT an error.** If the table comes back with no data when you expected some, the field path is wrong. Run once without `--fields` to see the real keys.
+4. **Nested arrays don't expand in the default table view.** If you see `foo: 5 items` instead of rows, add **`--flatten`** to expand them, or use `--output csv` (which always flattens).
+5. **`--flatten` produces dot-prefixed column names.** E.g. an array under `logs` becomes columns `LOGS.EVENT`, `LOGS.ID`, etc. You can then filter further with `--fields logs.id,logs.event`.
+
+### Examples (verified against a real connector)
+
+See which Logins exist (top-level scalars and one nested field):
+
+```bash
+supermetrics logins list \
+  --fields login_id,display_name,ds_info.ds_id,username
+# Default table output, only the columns we asked for.
+```
+
+Get the names of registered secrets (nested array, needs `--flatten`):
 
 ```bash
 supermetrics connector-builder-secrets list \
   --team-id "$(cat .team-id)" \
   --connector-identifier "$(cat .ds-id)" \
-  --fields name \
-  --output table
+  --fields secrets.name --flatten
 ```
 
-See which Logins exist for a Data Source (then pick one to use):
+List execution logs as flat rows:
 
 ```bash
-supermetrics logins list \
-  --fields id,ds_id,user_name \
-  --output table
+supermetrics connector-builder-logs list \
+  --team-id "$(cat .team-id)" \
+  --connector-identifier "$(cat .ds-id)" \
+  --fields logs.id,logs.event,logs.log_time,logs.request_id \
+  --flatten
 ```
 
 Cross-check whether a constructed runtime field ID is present in the
 saved Connector:
 
 ```bash
-# Store the full response (we want to scan it).
+# Store the full response (we want to scan it for many possible IDs).
 supermetrics datasource get \
   --data-source-id "$(cat .ds-id)" \
   --team-id "$(cat .team-id)" \
@@ -435,9 +452,11 @@ print(len(d.get("data", {}).get("rows", [])))
 
 ### Anti-patterns to avoid
 
-- **Piping a CLI JSON response to `python3 -c` just to extract one field.** `--fields path --output table` does the same thing with less code, no escaping, and no `$` collisions inside shell strings.
+- **Piping a CLI JSON response to `python3 -c` just to extract one field.** `--fields path` does the same thing with less code, no escaping, and no `$` collisions inside shell strings.
+- **Trusting an empty table.** If your `--fields` projection returns no rows when there should be some, the field path is wrong. Re-run without `--fields` to see actual keys, then fix.
 - **Reading a giant log file in full before knowing what you're looking for.** First narrow with `--fields` or `--output csv`, then `Read` the trimmed file.
 - **Re-running the same CLI command to extract two different fields.** Run once with `--output json > file`, then read multiple paths out of the file.
+- **Forgetting `--flatten` on nested-array commands.** You'll see `foo: N items` and think the response is empty. It isn't; the rows just need flattening.
 
 ## 10. Exit codes (skill error-handling)
 

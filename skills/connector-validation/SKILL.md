@@ -39,14 +39,14 @@ table view — we only need the identifying fields, not the full record:
 ```bash
 mkdir -p logs
 supermetrics logins list \
-  --fields id,ds_id,user_name \
-  --output table \
+  --fields login_id,display_name,ds_info.ds_id,username \
   > logs/logins.txt 2>&1
 ```
 
-Read `logs/logins.txt` and find a row whose `ds_id` matches the
-current `<ds-id>`. If one exists, capture its `id` into
-`<project>/.ds-user` and skip to step 1.
+Read `logs/logins.txt` and find a row whose `DS_INFO.DS_ID` matches
+the current `<ds-id>`. If one exists, capture its `USERNAME` (this
+is what `queries execute --ds-user` accepts — not the `LOGIN_ID`)
+into `<project>/.ds-user` and skip to step 1.
 
 If none exists, create one:
 
@@ -71,13 +71,13 @@ The output contains a URL. The skill must then:
 
    ```bash
    supermetrics logins list \
-     --fields id,ds_id,user_name \
-     --output table \
+     --fields login_id,display_name,ds_info.ds_id,username \
      > logs/logins.txt 2>&1
    ```
 
    Find the new Login matching the current `<ds-id>`, capture its
-   `id` into `<project>/.ds-user`.
+   `USERNAME` (this is what `queries execute --ds-user` accepts) into
+   `<project>/.ds-user`.
 5. **Close the used link** so the URL can't be reused:
 
    ```bash
@@ -146,13 +146,13 @@ specified one:
 supermetrics accounts list \
   --ds-id "$(cat .ds-id)" \
   --ds-users "$(cat .ds-user)" \
-  --fields id,name \
-  --output table \
   > logs/accounts.txt 2>&1
 ```
 
-Pick one account ID from the table for the first validation run.
-Expand later.
+Read `logs/accounts.txt` to find the account ID column (the column
+name will vary by Data Source — common names are `ID`, `ACCOUNT_ID`,
+or it may be nested as `ACCOUNTS.ID` and need `--flatten`). Pick one
+account ID for the first validation run; expand later.
 
 ### 4. Run `queries execute`
 
@@ -270,15 +270,20 @@ log can be deleted at the next "all green" checkpoint.
 When invoking the CLI in this skill, follow the rule from
 `${CLAUDE_PLUGIN_ROOT}/docs/cli-reference.md §9a`:
 
-- **Specific field(s) from output** → `--fields <path>[,…] --output table`.
-  Don't pipe to Python just to pluck a value.
+- **Specific field(s) from output** → `--fields <path>[,…]`. Default
+  output is already table; no `--output table` needed. Use
+  lowercase JSON keys with dot-notation for nesting.
+- **Nested array shows as `foo: N items`** → add `--flatten` (or
+  `--output csv`) to expand it into rows.
+- **Empty table when you expected data** → wrong field name. Run
+  once without `--fields` to see the actual keys, then fix.
 - **Need to skim the response** → `--output json > logs/<name>.json`,
   then `Read` the file.
 - **Real compute** (count, filter, transform) → Python or `jq`.
 
-This skill's examples already follow that pattern: small projected
-tables for discovery (`logins list`, `accounts list`), full JSON
-storage only for `datasource get` (we scan it for runtime IDs) and
+This skill's examples follow that pattern: projected tables for
+discovery (`logins list`, `accounts list`), full JSON storage only
+for `datasource get` (we scan it for runtime IDs) and
 `queries execute` (we diff it against Phase 3 samples).
 
 ## Common mistakes
