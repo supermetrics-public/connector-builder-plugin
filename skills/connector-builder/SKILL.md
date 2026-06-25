@@ -1,11 +1,11 @@
 ---
 name: connector-builder
-description: Use when the user mentions Supermetrics, Connector Builder, or any task involving authoring, editing, validating, running, or troubleshooting a custom Supermetrics Connector.
+description: Use when the user mentions Supermetrics, Connector Builder, or any task involving authoring, editing, validating, running, or troubleshooting a Supermetrics Connector.
 ---
 
 # Connector Builder for Supermetrics
 
-Orientation for building a custom Supermetrics Connector via the `supermetrics` CLI.
+Orientation for building a Supermetrics Connector via the `supermetrics` CLI.
 
 ## Vocabulary
 
