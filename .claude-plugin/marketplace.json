@@ -1,0 +1,31 @@
+{
+  "name": "supermetrics-connector-builder",
+  "description": "Marketplace hosting the Supermetrics Connector Builder plugin for Claude Code.",
+  "owner": {
+    "name": "Supermetrics",
+    "email": "support@supermetrics.com"
+  },
+  "plugins": [
+    {
+      "name": "supermetrics-connector-builder",
+      "source": "./",
+      "displayName": "Supermetrics Connector Builder",
+      "description": "Build, validate, and troubleshoot Supermetrics Connectors with Claude — through a guided 5-phase workflow driving the supermetrics CLI.",
+      "version": "2026.06.0",
+      "homepage": "https://github.com/supermetrics-public/connector-builder-plugin",
+      "repository": "https://github.com/supermetrics-public/connector-builder-plugin",
+      "license": "Apache-2.0",
+      "author": {
+        "name": "Supermetrics"
+      },
+      "category": "data-integration",
+      "tags": [
+        "supermetrics",
+        "connector",
+        "marketing-data",
+        "etl",
+        "cli"
+      ]
+    }
+  ]
+}

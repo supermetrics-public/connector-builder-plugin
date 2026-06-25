@@ -83,11 +83,50 @@ The configuring skill uses whichever it finds on your PATH.
 
 ## Install the plugin
 
-> **Coming soon.** This plugin is in pre-release. Install instructions
-> will be added here once distribution is finalized. If you've found
-> this repo and want to try the plugin against your own Connectors
-> early, the maintainers can help — open an Issue and we'll point you
-> at the current install path.
+Inside any Claude Code session, run two commands. The first registers
+this repo as a Claude Code marketplace; the second installs the plugin
+from it.
+
+```text
+/plugin marketplace add supermetrics-public/connector-builder-plugin
+/plugin install supermetrics-connector-builder@supermetrics-connector-builder
+```
+
+The repeated `supermetrics-connector-builder` is intentional — the plugin
+and the marketplace share a name in this single-plugin repo. The form is
+`<plugin-name>@<marketplace-name>`.
+
+After installing, you may need to reload plugins so Claude Code picks up
+the new skills without restarting:
+
+```text
+/reload-plugins
+```
+
+Verify the plugin is loaded:
+
+```text
+/plugin list
+```
+
+You should see `supermetrics-connector-builder@supermetrics-connector-builder`
+listed and enabled.
+
+### Updating
+
+When a new version of the plugin is published, refresh the marketplace
+and Claude Code will pick up the latest release:
+
+```text
+/plugin marketplace update supermetrics-connector-builder
+```
+
+### Uninstalling
+
+```text
+/plugin uninstall supermetrics-connector-builder@supermetrics-connector-builder
+/plugin marketplace remove supermetrics-connector-builder
+```
 
 ---
 
