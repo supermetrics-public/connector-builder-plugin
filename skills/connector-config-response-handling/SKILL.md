@@ -73,8 +73,9 @@ declaring pagination done:
 2. **Force at least two pages during Phase 5 validation.** Pick a
    date range or filter that you know returns more rows than one
    page, then verify the row count matches the expected total.
-   `--all` on `queries execute` is the single most useful flag for
-   this.
+   Use `--max-rows <N>` on `queries execute` (e.g. `--max-rows 1000`)
+   — **not** `--all`, which against a Connector Builder source can
+   stop after the first page. See `${CLAUDE_PLUGIN_ROOT}/docs/cli-reference.md §8`.
 3. **Decide explicitly how the configuration knows it's the last
    page.** Empty cursor? Cursor pointing to itself? `null` next URL?
    `has_more: false`? Missing field? Each API expresses

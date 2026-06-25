@@ -98,10 +98,11 @@ runtime_field_id = <report_type_id> + "_" + <config_field_id>
 Example: a field declared as `clicks` inside Report Type `ad_perf` is
 queried as `ad_perf_clicks`. Underscore separator, not dot.
 
-You can construct expected runtime IDs from the Configuration
-mechanically using this rule. **But always verify by introspecting
-the saved Connector** — the prefix rule may change in future schema
-versions, and `datasource get` is authoritative:
+**Construct runtime IDs from the Configuration directly using this
+rule.** Do not try to scan `datasource get` for a "prefixed field
+ID" label — there isn't one. The prefixed IDs do appear in the
+`datasource get` field listing, but they're not annotated. Treat
+that listing as the cross-check, not the discovery mechanism.
 
 ```bash
 mkdir -p logs
@@ -112,9 +113,8 @@ supermetrics datasource get \
   > logs/datasource.json 2>&1
 ```
 
-Parse `logs/datasource.json` for the available fields and confirm
-each constructed ID actually appears in the runtime view. If one
-doesn't, either:
+Verification: for each field ID you constructed, confirm it exists
+in `logs/datasource.json`. If one doesn't, either:
 
 - The Configuration is wrong (field not declared, declared under a
   different Report Type, or has a typo) — fix in Phase 4.
@@ -175,6 +175,12 @@ Notes:
   it triggers a Claude Code permission prompt on every run and the
   prompt is unnecessary. Read the file with `Read` afterwards if you
   need to see the content.
+- **For pagination verification**, do **not** use `--all` — against a
+  Connector Builder source it can stop after the first page. Use
+  `--max-rows <N>` (e.g. `--max-rows 1000`) to force the platform
+  through the configured pagination until N rows or the API runs out.
+  See `${CLAUDE_PLUGIN_ROOT}/docs/cli-reference.md §8` for the full
+  rationale.
 
 ### 5. Branch on exit code
 

@@ -306,15 +306,58 @@ supermetrics queries execute \
   `--connector-identifier` flag in `connector-builder *`). Usually a
   5-character string assigned by Connector Builder at create time.
 - `--fields` — comma-separated subset of fields exposed by the Report
-  Type.
+  Type. Use the **runtime** IDs (see "Runtime field IDs" below), not
+  the IDs declared in `config.json`.
 - `--start-date` / `--end-date` — windowed reports.
 - `--ds-accounts` — selector expression for which Accounts to fetch.
-- `--all` / `--limit N` / `--max-rows N` — paging knobs.
+- `--all` / `--limit N` / `--max-rows N` — paging knobs (see below).
 - Output: JSON (default), `table`, or `csv` (auto-flattens nested data).
 - Long-running queries auto-poll with adaptive intervals (1s → 2s → 5s).
 
 This is the command the build → execute → diagnose → fix loop hangs off
 of.
+
+### Paging: prefer `--max-rows`, not `--all`, for Connector Builder sources
+
+For Connector Builder–authored sources, `--all` does **not** drive the
+Connector's own pagination loop — it controls the platform-level "fetch
+every available page" flag in a different context, and against a CB
+source it can stop after the first page even when the underlying API
+has more data.
+
+Use `--max-rows N` to force pagination through the configured paging
+mechanism: the platform iterates the Connector's pagination configuration
+until either `N` rows are returned or the source API exhausts. This is
+the only reliable way to verify pagination is correctly configured during
+Phase 5 validation.
+
+```bash
+# Reliably exercise pagination across at least N rows:
+supermetrics queries execute --ds-id <ds-id> --ds-user <login> \
+  --fields … --start-date … --end-date … --ds-accounts <account> \
+  --max-rows 1000
+```
+
+### Runtime field IDs
+
+The `--fields` flag expects **runtime field IDs**, which are not the
+same as the field IDs declared in `config.json`. Under schema v1:
+
+```
+runtime_field_id = <report_type_id> + "_" + <config_field_id>
+```
+
+Example: a Configuration field `clicks` inside Report Type `ad_perf`
+is queried as `ad_perf_clicks`. Underscore separator, **not** dot.
+The rule is deterministic — construct the runtime IDs from the
+Configuration; you do not need to look them up.
+
+Neither `datasource get` nor `connector-builder-logs *` displays the
+prefix rule explicitly. The prefixed IDs do appear in the field
+listing returned by `datasource get`, but they are not labeled as
+"runtime-prefixed" — they're just the only field IDs there. Don't
+spend time hunting for a label; apply the rule and verify the
+constructed IDs exist in the listing.
 
 ## 9. Global flags (relevant to skills)
 
