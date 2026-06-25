@@ -1,20 +1,12 @@
-<!--
-DRAFT — structure-only. Sections marked **TBD** need tone/voice
-decisions before they can be written. Skill table content is settled.
-This file ships in the published plugin; internal/* never does.
--->
-
 # Supermetrics Connector Builder for Claude Code
 
-Claude Code plugin that helps you build, validate, and troubleshoot
-custom Supermetrics Connectors through a guided workflow, using the
-`supermetrics` CLI.
-
-> **TBD — tagline / one-paragraph pitch.** Currently a placeholder.
-> Need to settle the tone first: do we lead with the workflow
-> ("guided 5-phase build"), the differentiator ("turn a working
-> Python script into a real Connector"), or the audience
-> ("for customers and partners building Connectors with Claude")?
+**For Supermetrics customers and partners building Connectors with
+Claude Code.** This plugin loads a set of skills that guide Claude
+through a proven 5-phase workflow — define what data you want,
+research the source's API, produce a working Configuration, and
+validate it against real data — all by driving the official
+`supermetrics` CLI. You stay in your terminal; you don't have to
+switch to the Connector Builder web UI for routine authoring.
 
 ---
 
@@ -39,8 +31,8 @@ Connector Builder web UI for routine authoring.
 
 ## Who this is for
 
-- Supermetrics **customers** building their own Connectors — both
-  low-code authors and engineers comfortable in a terminal.
+- Supermetrics **customers** building Connectors — both low-code
+  authors and engineers comfortable in a terminal.
 - **Partners and consultants** building Connectors for clients across
   multiple Supermetrics teams.
 
@@ -91,14 +83,11 @@ The configuring skill uses whichever it finds on your PATH.
 
 ## Install the plugin
 
-> **TBD — distribution and install mechanics.** Claude Code plugins
-> install through a **marketplace**, which requires either submitting
-> to an existing marketplace (e.g. the community one) or shipping our
-> own `.claude-plugin/marketplace.json` alongside the plugin. We've
-> deferred that decision; this section gets filled in once the path
-> is chosen. In the meantime, see _Running locally for development_
-> in `internal/CONTEXT.md` for how to load the plugin straight from
-> a working copy of this repo.
+> **Coming soon.** This plugin is in pre-release. Install instructions
+> will be added here once distribution is finalized. If you've found
+> this repo and want to try the plugin against your own Connectors
+> early, the maintainers can help — open an Issue and we'll point you
+> at the current install path.
 
 ---
 
@@ -233,12 +222,13 @@ values. The skills add it to `.gitignore` automatically.
 
 ## Troubleshooting basics
 
-> **TBD — depth and tone.** Below are placeholder topics. Decide
-> whether the README should cover surface-level issues only (and
-> defer real diagnostics to `connector-troubleshooting`) or include
-> a longer FAQ-style section.
+A few common setup / install issues. For diagnosing a Connector
+that behaves wrong — wrong data, runtime errors, auth failures —
+ask Claude to troubleshoot it; the `connector-troubleshooting`
+skill loads automatically and walks through CLI logs, exit codes,
+and the secrets-vs-auth distinction.
 
-Common situations:
+Common setup situations:
 
 - **`supermetrics: command not found`** — re-run the install in
   Pre-requisites §1.
@@ -289,22 +279,36 @@ without a new plugin release.
 
 ## Support and feedback
 
-> **TBD — placeholder.** Will be filled in closer to launch.
-> Decision pending: GitHub Issues only, Supermetrics support
-> helpdesk, or a split (technical → GitHub, account/billing →
-> helpdesk).
+Open an issue at
+[github.com/supermetrics-public/connector-builder-plugin/issues](https://github.com/supermetrics-public/connector-builder-plugin/issues)
+for bug reports, feature requests, or doc gaps.
+
+When reporting an issue, including the following helps a lot:
+
+- The exact prompt that triggered the unexpected behavior.
+- Which skill (if any) the agent loaded.
+- The exit code and stderr from any failing `supermetrics` CLI
+  command (see your `<project>/logs/` folder).
+- The plugin version (`supermetrics-connector-builder` line in
+  `/plugin list` output).
+
+For Supermetrics product / account / billing questions, use the
+existing Supermetrics support channel rather than this repo.
 
 ---
 
 ## License
 
-> **TBD — awaiting company guidance.**
+Apache License 2.0 — see [LICENSE](LICENSE) for the full text.
 
 ---
 
 ## Contributing
 
-> **TBD — depends on whether we want external contributions.** If
-> yes: short CONTRIBUTING.md, PR template, code-of-conduct link. If
-> no: a sentence saying "this plugin is maintained internally;
-> please open Issues for feedback."
+This plugin is currently **maintained internally by Supermetrics**.
+External pull requests will be closed with a pointer back here —
+contributions are welcome via the **Issues** tracker
+(bug reports, feature requests, documentation fixes).
+
+The contribution model may change as the plugin matures; check this
+section for updates.
