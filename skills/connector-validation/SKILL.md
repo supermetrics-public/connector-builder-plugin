@@ -70,10 +70,18 @@ If none exists, create one:
 supermetrics login-links create \
   --ds-id <ds-id> \
   --description "Login for <connector-name> validation" \
-  --expiry-time "+24h" \
+  --expiry-time <YYYY-MM-DDTHH:MM:SSZ> \
   --output json \
   > logs/login-link.json 2>&1
 ```
+
+⚠️ **`--expiry-time` requires an explicit ISO 8601 datetime.**
+Despite the CLI's `--help` claiming relative strings like `+24h` or
+`1 day` are accepted, the API rejects them. Construct an absolute
+UTC datetime ~24 hours from now in your head (you have today's date
+in context) and pass it as a literal — e.g.
+`--expiry-time 2026-06-26T15:00:00Z`. Date-only (`YYYY-MM-DD`) is
+also accepted and defaults to midnight UTC.
 
 The output contains a URL. The skill must then:
 
